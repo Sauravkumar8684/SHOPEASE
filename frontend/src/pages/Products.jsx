@@ -8,19 +8,20 @@ function Products() {
   const [loadingId, setLoadingId] = useState(null);
   const navigate = useNavigate();
 
-   useEffect(() => {
-  API.get("/products")
-    .then((res) => {
-      const data = res.data.products || res.data;
-      setProducts(data);
-    })
-    .catch((err) => {
-      console.log(err);
-      toast.error("Failed to load products ");
-    });
-}, []);
+  // Fetch products
+  useEffect(() => {
+    API.get("/products")
+      .then((res) => {
+        const data = res.data.products || res.data;
+        setProducts(data);
+      })
+      .catch((err) => {
+        console.log(err);
+        toast.error("Failed to load products");
+      });
+  }, []);
 
-  //  Add to Cart
+  // Add to cart
   const addToCart = async (productId) => {
     try {
       setLoadingId(productId);
@@ -30,10 +31,10 @@ function Products() {
         quantity: 1,
       });
 
-      toast.success("Added to cart ");
-
-    } catch {
-      toast.error("Error adding to cart ");
+      toast.success("Added to cart");
+    } catch (err) {
+      console.log(err);
+      toast.error("Error adding to cart");
     } finally {
       setLoadingId(null);
     }
@@ -41,8 +42,6 @@ function Products() {
 
   return (
     <div className="min-h-screen bg-gray-100 py-8 px-4">
-
-      {/* Container */}
       <div className="max-w-6xl mx-auto">
 
         {/* Header */}
@@ -53,37 +52,37 @@ function Products() {
 
           <button
             onClick={() => navigate("/cart")}
-            className="bg-black text-white px-5 py-2 rounded-lg hover:bg-gray-800 transition"
+            className="bg-black text-white px-5 py-2 rounded-lg hover:bg-gray-800"
           >
             Go to Cart 🛒
           </button>
         </div>
 
-        {/* Grid */}
+        {/* Products Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
 
           {products.length === 0 ? (
-            <p className="text-gray-600">No products available </p>
+            <p className="text-gray-600">No products available</p>
           ) : (
             products.map((p) => (
               <div
                 key={p._id}
-                className="bg-white rounded-xl shadow-lg p-5 border hover:shadow-2xl transition duration-300"
+                className="bg-white rounded-xl shadow-md p-4 hover:shadow-lg transition"
               >
-                {/* Image placeholder */}
-                <div className="h-40 bg-gray-200 rounded mb-4 flex items-center justify-center">
-                  <span className="text-gray-500 text-sm">
-                    No Image
-                  </span>
-                </div>
+                {/* Image */}
+                <img
+                  src={p.image}
+                  alt={p.name}
+                  className="w-full h-40 object-cover rounded"
+                />
 
-                {/* Product Name */}
-                <h2 className="font-bold text-lg text-gray-800">
+                {/* Name */}
+                <h2 className="font-semibold text-lg mt-2">
                   {p.name}
                 </h2>
 
                 {/* Price */}
-                <p className="text-gray-700 mb-4 font-medium">
+                <p className="text-green-600 font-bold">
                   ₹{p.price}
                 </p>
 
@@ -91,9 +90,9 @@ function Products() {
                 <button
                   onClick={() => addToCart(p._id)}
                   disabled={loadingId === p._id}
-                  className={`w-full py-2 rounded-lg text-white font-medium transition ${
+                  className={`mt-2 w-full py-2 rounded text-white ${
                     loadingId === p._id
-                      ? "bg-gray-400 cursor-not-allowed"
+                      ? "bg-gray-400"
                       : "bg-green-600 hover:bg-green-700"
                   }`}
                 >
