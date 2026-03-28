@@ -77,7 +77,7 @@ router.get("/:id", async (req, res) => {
 // ===============================
 router.post("/add",isAuthenticatedUser, isAdmin, async (req, res) => {
   try {
-    const { name, description, price, category, stock, Image } = req.body;
+    const { name, description, price, category, stock, Image, ImageUrl } = req.body;
 
     //  Basic validation
     if (!name || !price) {
@@ -90,7 +90,7 @@ router.post("/add",isAuthenticatedUser, isAdmin, async (req, res) => {
       price,
       category,
       stock,
-      image: ImageUrl,
+      image: image || ImageUrl,
     });
 
     const savedProduct = await newProduct.save();
