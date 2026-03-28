@@ -70,11 +70,11 @@ function Products() {
                 className="bg-white rounded-xl shadow-md p-4 hover:shadow-lg transition"
               >
                 {/* Image */}
-                <img
-                  src={p.Image || p.imageurl || "https://via.placeholder.com/300"}
-                  alt={p.name}
-                  className="w-full h-40 object-cover rounded"
-                />
+              <img
+                src={p.image || "https://via.placeholder.com/300"}
+                alt={p.name}
+                 className="w-full h-40 object-cover rounded"
+             />
 
                 {/* Name */}
                 <h2 className="font-semibold text-lg mt-2">

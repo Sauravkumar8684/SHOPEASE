@@ -77,11 +77,11 @@ router.get("/:id", async (req, res) => {
 // ===============================
 router.post("/add",isAuthenticatedUser, isAdmin, async (req, res) => {
   try {
-    const { name, description, price, category, stock, Image } = req.body;
+    const { name, description, price, category, stock, image } = req.body;
 
     //  Basic validation
-    if (!name || !price) {
-      return res.status(400).json({ msg: "Name & Price required " });
+    if (!name || !price || !image) {
+      return res.status(400).json({ msg: "Name,  Price & Image required " });
     }
 
     const newProduct = new Product({
@@ -90,7 +90,7 @@ router.post("/add",isAuthenticatedUser, isAdmin, async (req, res) => {
       price,
       category,
       stock,
-      Image,
+      image,
     });
 
     const savedProduct = await newProduct.save();

@@ -28,7 +28,7 @@ const productSchema = new Schema({
         type: Date,
         default: Date.now
     },
-   Image: {
+   image: {
   type: String,
   required: [true, "Image URL is required"]
 }

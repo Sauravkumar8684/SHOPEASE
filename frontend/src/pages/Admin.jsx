@@ -11,7 +11,7 @@ function Admin() {
   const [form, setForm] = useState({
     name: "",
     price: "",
-    Image: "",
+    image: "",
     description: "",
     category: "",
     stock: "",
@@ -47,7 +47,7 @@ function Admin() {
 
   // ➕ ADD PRODUCT
   const addProduct = async () => {
-    if (!form.name || !form.price) {
+    if (!form.name || !form.price || !form.image) {
       return toast.error("Fill required fields ");
     }
 
@@ -63,7 +63,7 @@ function Admin() {
       setForm({
         name: "",
         price: "",
-        ImageUrl: "",
+        image: "",
         description: "",
         category: "",
         stock: "",
@@ -91,7 +91,7 @@ function Admin() {
       setForm({
         name: "",
         price: "",
-        ImageUrl: "",
+        image: "",
         description: "",
         category: "",
         stock: "",
@@ -124,7 +124,7 @@ function Admin() {
       {/* FORM */}
       <div className="bg-white p-4 rounded shadow mb-6">
         <h2 className="font-semibold mb-3">
-          {editId ? "Edit Product " : "Add Product ➕"}
+          {editId ? "Edit Product " : "Add Product "}
         </h2>
 
         <input
@@ -146,8 +146,8 @@ function Admin() {
         <input
           type="text"
           placeholder="Image URL"
-          value={form.ImageUrl}
-          onChange={(e) => setForm({ ...form, ImageUrl: e.target.value })}
+          value={form.image}
+          onChange={(e) => setForm({ ...form, image: e.target.value })}
           className="border p-2 mr-2 mb-2"
         />
 
@@ -191,7 +191,7 @@ function Admin() {
           <div key={p._id} className="bg-white p-4 rounded shadow">
 
             <img
-              src={p.ImageUrl || "https://via.placeholder.com/150"}
+              src={p.image || "https://via.placeholder.com/150"}
               alt={p.name}
               className="h-32 w-full object-cover mb-2"
             />
