@@ -11,7 +11,7 @@ function Admin() {
   const [form, setForm] = useState({
     name: "",
     price: "",
-    ImageUrl: "",
+    Image: "",
     description: "",
     category: "",
     stock: "",

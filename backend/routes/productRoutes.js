@@ -90,7 +90,7 @@ router.post("/add",isAuthenticatedUser, isAdmin, async (req, res) => {
       price,
       category,
       stock,
-      image,
+      Image,
     });
 
     const savedProduct = await newProduct.save();
