@@ -71,7 +71,7 @@ function Products() {
               >
                 {/* Image */}
                 <img
-                  src={p.image || p.imageurl}
+                  src={p.image || p.imageurl || "https://via.placeholder.com/300"}
                   alt={p.name}
                   className="w-full h-40 object-cover rounded"
                 />
