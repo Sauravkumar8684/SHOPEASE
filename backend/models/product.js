@@ -28,10 +28,10 @@ const productSchema = new Schema({
         type: Date,
         default: Date.now
     },
-    ImageUrl: {
-        type: String,
-        required: [true, "Image URL is required"]
-    }
+   image: {
+  type: String,
+  required: [true, "Image URL is required"]
+}
 });
 
 
