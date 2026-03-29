@@ -67,6 +67,7 @@ function Products() {
             products.map((p) => (
               <div
                 key={p._id}
+                 onClick={() => navigate(`/product/${p._id}`)}
                 className="bg-white rounded-xl shadow-md p-4 hover:shadow-lg transition"
               >
                 {/* Image */}

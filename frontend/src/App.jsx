@@ -10,6 +10,7 @@ import Navbar from "./components/Navbar";
 import Admin from "./pages/Admin";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminOrders from "./pages/AdminOrder"; 
+import ProductDetails from "./pages/ProductDetails";
 
 
 //  Protected Route (User)
@@ -102,6 +103,13 @@ function AppContent() {
             <AdminRoute>
               <AdminOrders />
             </AdminRoute>
+          }
+        />
+        {/* Product Details */}
+        <Route
+          path="/products/:id"
+          element={
+            <ProductDetails />
           }
         />
       </Routes>
