@@ -1,10 +1,18 @@
-
 import { Router } from "express";
-const router = Router();
-
+import { isValidObjectId } from "mongoose";
 import Product from "../models/product.js";
 import { isAdmin, isAuthenticatedUser } from "../middleware/authMiddleware.js";
 
+const router = Router();
+
+// ID validate karne ka helper
+const validateId = (req, res) => {
+  if (!isValidObjectId(req.params.id)) {
+    res.status(400).json({ success: false, msg: "Invalid product ID ❌" });
+    return false;
+  }
+  return true;
+};
 
 // ===============================
 //  GET ALL PRODUCTS
@@ -15,142 +23,149 @@ router.get("/", async (req, res) => {
 
     let query = {};
 
-    //  Search
     if (keyword) {
       query.name = { $regex: keyword, $options: "i" };
     }
 
-    //  Category
     if (category) {
       query.category = category;
     }
 
-    //  Price filter
     if (minPrice || maxPrice) {
       query.price = {};
       if (minPrice) query.price.$gte = Number(minPrice);
       if (maxPrice) query.price.$lte = Number(maxPrice);
     }
 
-    let products = Product.find(query);
+    let dbQuery = Product.find(query);
 
-    //  Sorting
-    if (sort === "price_asc") {
-      products = products.sort({ price: 1 });
-    } else if (sort === "price_desc") {
-      products = products.sort({ price: -1 });
-    }
+    if (sort === "price_asc") dbQuery = dbQuery.sort({ price: 1 });
+    else if (sort === "price_desc") dbQuery = dbQuery.sort({ price: -1 });
+    else dbQuery = dbQuery.sort({ createdAt: -1 }); // ✅ default: newest first
 
-    const result = await products;
+    const products = await dbQuery;
 
-    res.json(result);
+    res.json({
+      success: true,
+      count: products.length,
+      products,
+    });
 
   } catch (err) {
-    console.log("GET PRODUCTS ERROR:", err);
-    res.status(500).json({ error: err.message });
+    console.error("GET PRODUCTS ERROR:", err.message);
+    res.status(500).json({ success: false, msg: "Server error" });
   }
 });
 
-
 // ===============================
-// GET SINGLE PRODUCT
+//  GET SINGLE PRODUCT
 // ===============================
 router.get("/:id", async (req, res) => {
+  if (!validateId(req, res)) return; // ✅ ID check
+
   try {
     const product = await Product.findById(req.params.id);
 
     if (!product) {
-      return res.status(404).json({ msg: "Product not found " });
+      return res.status(404).json({ success: false, msg: "Product not found ❌" });
     }
 
-    res.json(product);
+    res.json({ success: true, product });
 
   } catch (err) {
-    console.log("GET ONE ERROR:", err);
-    res.status(500).json({ error: err.message });
+    console.error("GET ONE ERROR:", err.message);
+    res.status(500).json({ success: false, msg: "Server error" });
   }
 });
-
 
 // ===============================
 //  ADD PRODUCT (ADMIN)
 // ===============================
-router.post("/add",isAuthenticatedUser, isAdmin, async (req, res) => {
+router.post("/add", isAuthenticatedUser, isAdmin, async (req, res) => {
   try {
     const { name, description, price, category, stock, image } = req.body;
 
-    //  Basic validation
-    if (!name || !price || !image) {
-      return res.status(400).json({ msg: "Name,  Price & Image required " });
+    // ✅ Sab required fields validate karo
+    if (!name || !description || !price || !category || !image) {
+      return res.status(400).json({
+        success: false,
+        msg: "Name, description, price, category aur image required hain ❌"
+      });
     }
 
-    const newProduct = new Product({
+    const product = await Product.create({
       name,
       description,
       price,
       category,
-      stock,
+      stock: stock || 1,
       image,
     });
 
-    const savedProduct = await newProduct.save();
-
     res.status(201).json({
-      msg: "Product Added Successfully ",
-      product: savedProduct,
+      success: true,
+      msg: "Product added successfully ✅",
+      product,
     });
 
   } catch (err) {
-    console.log("ADD PRODUCT ERROR:", err);
-    res.status(400).json({ error: err.message });
-  }
-});
-
-
-// ===============================
-//  DELETE PRODUCT (ADMIN)
-// ===============================
-router.delete("/:id",isAuthenticatedUser, isAdmin, async (req, res) => {
-  try {
-    const product = await Product.findById(req.params.id);
-
-    if (!product) {
-      return res.status(404).json({ msg: "Product not found " });
-    }
-
-    await product.deleteOne();
-
-    res.json({ msg: "Product Deleted Successfully " });
-
-  } catch (err) {
-    console.log("DELETE ERROR:", err);
-    res.status(500).json({ error: err.message });
+    console.error("ADD PRODUCT ERROR:", err.message);
+    res.status(400).json({ success: false, msg: err.message });
   }
 });
 
 // ===============================
-// ✏️ UPDATE PRODUCT (ADMIN)
+//  UPDATE PRODUCT (ADMIN)
 // ===============================
 router.put("/:id", isAuthenticatedUser, isAdmin, async (req, res) => {
+  if (!validateId(req, res)) return; // ✅ ID check
+
   try {
+    // ✅ Sirf allowed fields — req.body directly nahi
+    const { name, description, price, category, stock, image } = req.body;
+
     const updatedProduct = await Product.findByIdAndUpdate(
       req.params.id,
-      req.body,
-      { new: true }
+      { name, description, price, category, stock, image },
+      { new: true, runValidators: true } // ✅ schema validators chalenge
     );
 
     if (!updatedProduct) {
-      return res.status(404).json({ msg: "Product not found " });
+      return res.status(404).json({ success: false, msg: "Product not found ❌" });
     }
 
     res.json({
-      msg: "Product Updated Successfully ",
+      success: true,
+      msg: "Product updated successfully ✅",
       product: updatedProduct,
     });
 
   } catch (err) {
-    console.log("UPDATE ERROR:", err);
-    res.status(500).json({ error: err.message });
+    console.error("UPDATE ERROR:", err.message);
+    res.status(500).json({ success: false, msg: "Server error" });
+  }
+});
+
+// ===============================
+//  DELETE PRODUCT (ADMIN)
+// ===============================
+router.delete("/:id", isAuthenticatedUser, isAdmin, async (req, res) => {
+  if (!validateId(req, res)) return; // ✅ ID check
+
+  try {
+    const product = await Product.findById(req.params.id);
+
+    if (!product) {
+      return res.status(404).json({ success: false, msg: "Product not found ❌" });
+    }
+
+    await product.deleteOne();
+
+    res.json({ success: true, msg: "Product deleted successfully ✅" });
+
+  } catch (err) {
+    console.error("DELETE ERROR:", err.message);
+    res.status(500).json({ success: false, msg: "Server error" });
   }
 });
 

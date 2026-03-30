@@ -1,132 +1,242 @@
 import { Router } from "express";
-const router = Router();
-
+import { isValidObjectId } from "mongoose";
 import Cart from "../models/cart.js";
 import Product from "../models/product.js";
 import { isAuthenticatedUser } from "../middleware/authMiddleware.js";
 
+const router = Router();
+
+// Cart total calculate karne ka helper
+const calculateTotal = (items) => {
+  return items.reduce((total, item) => {
+    if (item.product) {
+      return total + item.product.price * item.quantity;
+    }
+    return total;
+  }, 0);
+};
 
 // ===============================
-//  ADD PRODUCT TO CART
+//  ADD TO CART
 // ===============================
 router.post("/add", isAuthenticatedUser, async (req, res) => {
   try {
     const { productId, quantity = 1 } = req.body;
 
-    //  Check product exists
+    // ✅ ID validate karo
+    if (!isValidObjectId(productId)) {
+      return res.status(400).json({ success: false, msg: "Invalid product ID ❌" });
+    }
+
+    // ✅ Quantity positive honi chahiye
+    if (quantity < 1) {
+      return res.status(400).json({ success: false, msg: "Quantity kam se kam 1 honi chahiye ❌" });
+    }
+
     const product = await Product.findById(productId);
     if (!product) {
-      return res.status(404).json({ msg: "Product not found " });
+      return res.status(404).json({ success: false, msg: "Product not found ❌" });
+    }
+
+    // ✅ Stock check
+    if (quantity > product.stock) {
+      return res.status(400).json({
+        success: false,
+        msg: `Sirf ${product.stock} items available hain ❌`
+      });
     }
 
     let cart = await Cart.findOne({ user: req.user.id });
 
-    //  Create new cart if not exists
     if (!cart) {
-      cart = new Cart({
-        user: req.user.id,
-        items: [],
-      });
+      cart = new Cart({ user: req.user.id, items: [] });
     }
 
-    //  Check if item already exists
-    const item = cart.items.find(
+    const existingItem = cart.items.find(
       (item) => item.product.toString() === productId
     );
 
-    if (item) {
-      item.quantity += quantity;
+    if (existingItem) {
+      // ✅ Total quantity bhi stock se zyada nahi honi chahiye
+      const newQty = existingItem.quantity + quantity;
+      if (newQty > product.stock) {
+        return res.status(400).json({
+          success: false,
+          msg: `Cart mein already ${existingItem.quantity} hai. Sirf ${product.stock} available hain ❌`
+        });
+      }
+      existingItem.quantity = newQty;
     } else {
-      cart.items.push({
-        product: productId,
-        quantity,
-      });
+      cart.items.push({ product: productId, quantity });
     }
 
     await cart.save();
 
-    res.status(200).json({
+    // ✅ Populate karke return karo
+    const updatedCart = await Cart.findById(cart._id).populate("items.product");
+
+    res.json({
       success: true,
-      cart,
+      msg: "Product cart mein add ho gaya ✅",
+      items: updatedCart.items,
+      total: calculateTotal(updatedCart.items),
     });
 
   } catch (err) {
-    console.log("ADD ERROR:", err);
-    res.status(500).json({ error: err.message });
+    console.error("ADD TO CART ERROR:", err.message);
+    res.status(500).json({ success: false, msg: "Server error" });
   }
 });
 
-
 // ===============================
-// 📦 GET USER CART
+//  GET CART
 // ===============================
 router.get("/", isAuthenticatedUser, async (req, res) => {
   try {
     const cart = await Cart.findOne({ user: req.user.id })
       .populate("items.product");
 
-    if (!cart) {
-      return res.json({
-        success: true,
-        items: [],
-        total: 0,
-      });
+    if (!cart || cart.items.length === 0) {
+      return res.json({ success: true, items: [], total: 0 });
     }
 
-    let total = 0;
-
-    cart.items.forEach((item) => {
-      if (item.product) {
-        total += item.product.price * item.quantity;
-      }
-    });
+    // ✅ Deleted products ko filter karo
+    const validItems = cart.items.filter(item => item.product !== null);
 
     res.json({
       success: true,
-      items: cart.items,
-      total,
+      items: validItems,
+      total: calculateTotal(validItems),
     });
 
   } catch (err) {
-    console.log("GET CART ERROR:", err);
-    res.status(500).json({ error: err.message });
+    console.error("GET CART ERROR:", err.message);
+    res.status(500).json({ success: false, msg: "Server error" });
   }
 });
 
+// ===============================
+//  UPDATE QUANTITY  ← YE PEHLE MISSING THA
+// ===============================
+router.put("/update/:productId", isAuthenticatedUser, async (req, res) => {
+  try {
+    const { productId } = req.params;
+    const { quantity } = req.body;
+
+    if (!isValidObjectId(productId)) {
+      return res.status(400).json({ success: false, msg: "Invalid product ID ❌" });
+    }
+
+    if (!quantity || quantity < 1) {
+      return res.status(400).json({ success: false, msg: "Valid quantity required ❌" });
+    }
+
+    const product = await Product.findById(productId);
+    if (!product) {
+      return res.status(404).json({ success: false, msg: "Product not found ❌" });
+    }
+
+    // ✅ Stock check
+    if (quantity > product.stock) {
+      return res.status(400).json({
+        success: false,
+        msg: `Sirf ${product.stock} items available hain ❌`
+      });
+    }
+
+    const cart = await Cart.findOne({ user: req.user.id });
+    if (!cart) {
+      return res.status(404).json({ success: false, msg: "Cart not found ❌" });
+    }
+
+    const item = cart.items.find(
+      (item) => item.product.toString() === productId
+    );
+
+    if (!item) {
+      return res.status(404).json({ success: false, msg: "Product cart mein nahi hai ❌" });
+    }
+
+    item.quantity = quantity;
+    await cart.save();
+
+    const updatedCart = await Cart.findById(cart._id).populate("items.product");
+
+    res.json({
+      success: true,
+      msg: "Quantity update ho gayi ✅",
+      items: updatedCart.items,
+      total: calculateTotal(updatedCart.items),
+    });
+
+  } catch (err) {
+    console.error("UPDATE CART ERROR:", err.message);
+    res.status(500).json({ success: false, msg: "Server error" });
+  }
+});
 
 // ===============================
-// ❌ REMOVE ITEM FROM CART
+//  REMOVE ITEM FROM CART
 // ===============================
 router.delete("/remove/:productId", isAuthenticatedUser, async (req, res) => {
+  try {
+    const { productId } = req.params;
+
+    if (!isValidObjectId(productId)) {
+      return res.status(400).json({ success: false, msg: "Invalid product ID ❌" });
+    }
+
+    const cart = await Cart.findOne({ user: req.user.id });
+    if (!cart) {
+      return res.status(404).json({ success: false, msg: "Cart not found ❌" });
+    }
+
+    const itemIndex = cart.items.findIndex(
+      (item) => item.product.toString() === productId
+    );
+
+    if (itemIndex === -1) {
+      return res.status(404).json({ success: false, msg: "Product cart mein nahi hai ❌" });
+    }
+
+    cart.items.splice(itemIndex, 1);
+    await cart.save();
+
+    const updatedCart = await Cart.findById(cart._id).populate("items.product");
+
+    res.json({
+      success: true,
+      msg: "Product cart se remove ho gaya ✅",
+      items: updatedCart.items,
+      total: calculateTotal(updatedCart.items),
+    });
+
+  } catch (err) {
+    console.error("REMOVE CART ERROR:", err.message);
+    res.status(500).json({ success: false, msg: "Server error" });
+  }
+});
+
+// ===============================
+//  CLEAR CART  ← YE BHI MISSING THA
+// ===============================
+router.delete("/clear", isAuthenticatedUser, async (req, res) => {
   try {
     const cart = await Cart.findOne({ user: req.user.id });
 
     if (!cart) {
-      return res.status(404).json({ msg: "Cart not found " });
+      return res.status(404).json({ success: false, msg: "Cart not found ❌" });
     }
 
-    const itemIndex = cart.items.findIndex(
-      (item) => item.product.toString() === req.params.productId
-    );
+    cart.items = [];
+    await cart.save();
 
-    if (itemIndex > -1) {
-      cart.items.splice(itemIndex, 1);
-      await cart.save();
-
-      return res.json({
-        success: true,
-        cart,
-      });
-    } else {
-      return res.status(404).json({ msg: "Product not in cart " });
-    }
+    res.json({ success: true, msg: "Cart clear ho gaya ✅" });
 
   } catch (err) {
-    console.log("REMOVE ERROR:", err);
-    res.status(500).json({ error: err.message });
+    console.error("CLEAR CART ERROR:", err.message);
+    res.status(500).json({ success: false, msg: "Server error" });
   }
 });
-
-
 
 export default router;

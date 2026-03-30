@@ -1,10 +1,9 @@
 import jwt from "jsonwebtoken";
 
-//  USER AUTH CHECK
+// USER AUTH CHECK
 export const isAuthenticatedUser = (req, res, next) => {
   try {
     let token = req.headers.authorization;
-
 
     if (token && token.startsWith("Bearer ")) {
       token = token.split(" ")[1];
@@ -17,53 +16,44 @@ export const isAuthenticatedUser = (req, res, next) => {
       });
     }
 
-    //  Verify token
+    // ✅ Verify — invalid hone par automatically catch mein jayega
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-    if (!decoded) {
-      return res.status(401).json({
-        success: false,
-        msg: "Invalid token ❌",
-      });
-    }
-
     req.user = decoded;
-
-    next(); 
+    next();
 
   } catch (err) {
-    console.log("AUTH ERROR:", err.message);
-
+    console.error("AUTH ERROR:", err.message);
     return res.status(401).json({
       success: false,
-      msg: "Token failed ",
+      msg: "Token invalid ya expire ho gaya ❌",
     });
   }
 };
 
-
-//  ADMIN CHECK
+// ADMIN CHECK
 export const isAdmin = (req, res, next) => {
   try {
     if (!req.user) {
       return res.status(401).json({
+        success: false,
         msg: "User not authenticated ❌",
       });
     }
 
     if (req.user.role !== "admin") {
       return res.status(403).json({
-        msg: "Admin access only ",
+        success: false,
+        msg: "Admin access only ❌",
       });
     }
 
     next();
 
   } catch (err) {
-    console.log("ADMIN ERROR:", err.message);
-
+    console.error("ADMIN ERROR:", err.message);
     return res.status(500).json({
-      msg: "Server error ",
+      success: false,
+      msg: "Server error ❌",
     });
   }
 };

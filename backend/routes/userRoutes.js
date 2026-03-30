@@ -1,75 +1,126 @@
 import { Router } from "express";
-const router = Router();
-
+import { isValidObjectId } from "mongoose";
 import User from "../models/user.js";
-import { isAuthenticatedUser, isAdmin } from "../middleware/authMiddleware.js";
 import Order from "../models/order.js";
+import { isAuthenticatedUser, isAdmin } from "../middleware/authMiddleware.js";
 
+const router = Router();
 
 // ===============================
 //  DASHBOARD STATS (ADMIN)
 // ===============================
 router.get("/stats", isAuthenticatedUser, isAdmin, async (req, res) => {
   try {
-    const totalUsers = await User.countDocuments();
+    // ✅ Parallel queries — teeno ek saath chalenge, fast
+    const [totalUsers, totalOrders, revenueData, statusData] = await Promise.all([
+      User.countDocuments(),
+      Order.countDocuments(),
 
-    const totalOrders = await Order.countDocuments();
+      // ✅ Aggregation — Order.find() se zyada efficient
+      Order.aggregate([
+        { $group: { _id: null, total: { $sum: "$totalPrice" } } }
+      ]),
 
-    const orders = await Order.find();
+      // ✅ Bonus: status breakdown bhi do
+      Order.aggregate([
+        { $group: { _id: "$status", count: { $sum: 1 } } }
+      ])
+    ]);
 
-    const totalRevenue = orders.reduce(
-      (acc, item) => acc + item.totalPrice,
-      0
-    );
+    const totalRevenue = revenueData[0]?.total || 0;
+
+    // Status breakdown object banana
+    const ordersByStatus = {};
+    statusData.forEach(s => {
+      ordersByStatus[s._id] = s.count;
+    });
 
     res.json({
-      totalUsers,
-      totalOrders,
-      totalRevenue,
+      success: true,
+      stats: {
+        totalUsers,
+        totalOrders,
+        totalRevenue,
+        ordersByStatus, // { Pending: 5, Shipped: 3, Delivered: 10 }
+      }
     });
 
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error("STATS ERROR:", err.message);
+    res.status(500).json({ success: false, msg: "Server error" });
   }
 });
+
 // ===============================
-// 📦 GET ALL USERS (ADMIN)
+//  GET ALL USERS (ADMIN)
 // ===============================
 router.get("/", isAuthenticatedUser, isAdmin, async (req, res) => {
   try {
-    const users = await User.find().select("-password");
-    res.json(users);
+    const users = await User.find()
+      .select("-password")
+      .sort({ createdAt: -1 }); // ✅ newest first
+
+    res.json({
+      success: true,
+      count: users.length,
+      users,
+    });
+
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error("GET USERS ERROR:", err.message);
+    res.status(500).json({ success: false, msg: "Server error" });
   }
 });
 
-
 // ===============================
-// 🔄 UPDATE ROLE
+//  UPDATE USER ROLE (ADMIN)
 // ===============================
-
 router.put("/role/:id", isAuthenticatedUser, isAdmin, async (req, res) => {
+  // ✅ ID validate karo
+  if (!isValidObjectId(req.params.id)) {
+    return res.status(400).json({ success: false, msg: "Invalid user ID ❌" });
+  }
+
   try {
     const { role } = req.body;
 
-    
-    if (!["user", "admin"].includes(role)) {
-      return res.status(400).json({ msg: "Invalid role type" });
+    // ✅ Role validate karo
+    if (!role || !["user", "admin"].includes(role)) {
+      return res.status(400).json({
+        success: false,
+        msg: "Role sirf 'user' ya 'admin' ho sakta hai ❌"
+      });
+    }
+
+    // ✅ Admin apna khud ka role change na kar sake
+    if (req.params.id === req.user.id) {
+      return res.status(400).json({
+        success: false,
+        msg: "Aap apna khud ka role change nahi kar sakte ❌"
+      });
     }
 
     const user = await User.findByIdAndUpdate(
       req.params.id,
       { role },
       { new: true }
-    ).select("-password"); 
+    ).select("-password");
 
-    res.json({ msg: "Role updated successfully", user });
+    // ✅ User exist check
+    if (!user) {
+      return res.status(404).json({ success: false, msg: "User not found ❌" });
+    }
+
+    res.json({
+      success: true,
+      msg: `Role "${role}" update ho gaya ✅`,
+      user,
+    });
+
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error("ROLE UPDATE ERROR:", err.message);
+    res.status(500).json({ success: false, msg: "Server error" });
   }
 });
-
-
 
 export default router;

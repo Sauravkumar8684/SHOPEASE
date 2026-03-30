@@ -1,38 +1,43 @@
-import { Schema, model } from 'mongoose';
+import { Schema, model } from "mongoose";
 
-const productSchema = new Schema({
+const productSchema = new Schema(
+  {
     name: {
-        type: String,
-        required: [true, "Product "],
-        trim: true
+      type: String,
+      required: [true, "Product name is required ❌"],
+      trim: true,
     },
     description: {
-        type: String,
-        required: [true, "Product name is required"],
+      type: String,
+      required: [true, "Product description is required ❌"],
+      trim: true,
     },
     price: {
-        type: Number,
-        required: [true, "Product "],
-        max: [99999999, "Price should not exceed 8 digits"]
+      type: Number,
+      required: [true, "Product price is required ❌"],
+      // ✅ Min aur max dono
+      min: [0, "Price 0 se kam nahi ho sakti ❌"],
+      max: [99999999, "Price 8 digits se zyada nahi ho sakti ❌"],
     },
     category: {
-        type: String,
-        required: [true, "Category "]
+      type: String,
+      required: [true, "Category is required ❌"],
+      trim: true,
     },
     stock: {
-        type: Number,
-        required: [true, "Stock "],
-        default: 1
+      type: Number,
+      required: [true, "Stock quantity is required ❌"],
+      // ✅ Stock negative nahi hona chahiye
+      min: [0, "Stock 0 se kam nahi ho sakta ❌"],
+      default: 0,
     },
-    createdAt: {
-        type: Date,
-        default: Date.now
+    image: {
+      type: String,
+      required: [true, "Image URL is required ❌"],
     },
-   image: {
-  type: String,
-  required: [true, "Image URL is required"]
-}
-});
+  },
+  // ✅ timestamps — createdAt aur updatedAt automatically
+  { timestamps: true }
+);
 
-
-export default model('Product', productSchema);
+export default model("Product", productSchema);
