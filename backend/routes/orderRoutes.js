@@ -22,26 +22,26 @@ router.post("/checkout", isAuthenticatedUser, async (req, res) => {
     if (!cart || cart.items.length === 0) {
       return res.status(400).json({
         success: false,
-        msg: "Cart khali hai ❌"
+        msg: "Cart empty ❌"
       });
     }
 
-    // ✅ Deleted products filter karo
+    // ✅ Deleted products filter and stock check
     const validItems = cart.items.filter(item => item.product !== null);
 
     if (validItems.length === 0) {
       return res.status(400).json({
         success: false,
-        msg: "Cart mein koi valid product nahi hai ❌"
+        msg: "Cart no valid product ❌"
       });
     }
 
-    // ✅ Stock check — sab items ke liye pehle
+    
     for (const item of validItems) {
       if (item.quantity > item.product.stock) {
         return res.status(400).json({
           success: false,
-          msg: `"${item.product.name}" ka sirf ${item.product.stock} stock available hai ❌`
+          msg: `"${item.product.name}" ka sirf ${item.product.stock} stock available  ❌`
         });
       }
     }
@@ -51,7 +51,7 @@ router.post("/checkout", isAuthenticatedUser, async (req, res) => {
       return sum + item.product.price * item.quantity;
     }, 0);
 
-    // ✅ Order create karo
+    // ✅ Order created
     const order = await Order.create({
       user: userId,
       orderItems: validItems.map(item => ({
@@ -62,24 +62,24 @@ router.post("/checkout", isAuthenticatedUser, async (req, res) => {
       status: "Pending",
     });
 
-    // ✅ Stock reduce karo — order confirm hone ke baad
+    // ✅ Stock updated
     for (const item of validItems) {
       await Product.findByIdAndUpdate(item.product._id, {
         $inc: { stock: -item.quantity }
       });
     }
 
-    // ✅ Cart clear karo
+    // ✅ Cart clear 
     cart.items = [];
     await cart.save();
 
-    // ✅ Populated order return karo
+    
     const populatedOrder = await Order.findById(order._id)
       .populate("orderItems.product", "name price image");
 
     res.status(201).json({
       success: true,
-      msg: "Order place ho gaya ✅",
+      msg: "Order placed ✅",
       order: populatedOrder,
     });
 
@@ -96,7 +96,7 @@ router.get("/", isAuthenticatedUser, async (req, res) => {
   try {
     const orders = await Order.find({ user: req.user.id })
       .populate("orderItems.product", "name price image")
-      .sort({ createdAt: -1 }); // ✅ newest first
+      .sort({ createdAt: -1 });
 
     res.json({
       success: true,
@@ -112,16 +112,16 @@ router.get("/", isAuthenticatedUser, async (req, res) => {
 
 // ===============================
 //  ADMIN: GET ALL ORDERS
-// ⚠️ Ye route /:id se PEHLE hona chahiye
+
 // ===============================
 router.get("/all", isAuthenticatedUser, isAdmin, async (req, res) => {
   try {
     const orders = await Order.find()
       .populate("user", "name email")
       .populate("orderItems.product", "name price image")
-      .sort({ createdAt: -1 }); // ✅ newest first
+      .sort({ createdAt: -1 }); 
 
-    // ✅ Total revenue bhi return karo
+  
     const totalRevenue = orders.reduce((sum, o) => sum + o.totalPrice, 0);
 
     res.json({
@@ -153,7 +153,7 @@ router.get("/:id", isAuthenticatedUser, async (req, res) => {
       return res.status(404).json({ success: false, msg: "Order not found ❌" });
     }
 
-    // ✅ Sirf apna order dekh sake — admin sab dekh sakta hai
+    
     if (order.user.toString() !== req.user.id && req.user.role !== "admin") {
       return res.status(403).json({ success: false, msg: "Access denied ❌" });
     }
@@ -177,7 +177,7 @@ router.put("/:id/status", isAuthenticatedUser, isAdmin, async (req, res) => {
   try {
     const { status } = req.body;
 
-    // ✅ Status validate karo
+    // ✅ Status validation
     if (!status || !VALID_STATUSES.includes(status)) {
       return res.status(400).json({
         success: false,
@@ -191,11 +191,11 @@ router.put("/:id/status", isAuthenticatedUser, isAdmin, async (req, res) => {
       return res.status(404).json({ success: false, msg: "Order not found ❌" });
     }
 
-    // ✅ Delivered order dobara update na ho
+    // ✅ Delivered order not be updated
     if (order.status === "Delivered") {
       return res.status(400).json({
         success: false,
-        msg: "Delivered order ka status change nahi ho sakta ❌"
+        msg: "Delivered order not be change ❌"
       });
     }
 
@@ -204,7 +204,7 @@ router.put("/:id/status", isAuthenticatedUser, isAdmin, async (req, res) => {
 
     res.json({
       success: true,
-      msg: `Status "${status}" update ho gaya ✅`,
+      msg: `Status "${status}" updated ✅`,
       order,
     });
 

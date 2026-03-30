@@ -26,7 +26,7 @@ const userSchema = new Schema(
       enum: ["user", "admin"],
       default: "user",
     },
-    // ✅ Indian phone number validation
+    
     phoneNumber: {
       type: String,
       required: [true, "Phone number is required"],
@@ -36,12 +36,12 @@ const userSchema = new Schema(
   { timestamps: true }
 );
 
-// ✅ next() properly call ho raha hai
-userSchema.pre("save", async function (next) {
-  if (!this.isModified("password")) return next();
+
+userSchema.pre("save", async function () {
+  if (!this.isModified("password")) return ;
   const salt = await genSalt(10);
   this.password = await hash(this.password, salt);
-  next();
+  
 });
 
 export default model("User", userSchema);

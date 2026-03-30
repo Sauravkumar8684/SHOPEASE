@@ -19,21 +19,21 @@ const orderSchema = new Schema(
           quantity: {
             type: Number,
             required: [true, "Quantity is required ❌"],
-            min: [1, "Quantity atleast 1 honi chahiye ❌"],
+            min: [1, "Quantity atleast 1 is required ❌"],
           },
         },
       ],
       // ✅ Empty order block
       validate: {
         validator: (arr) => arr.length > 0,
-        message: "Order mein atleast 1 item hona chahiye ❌",
+        message: "Order mein atleast 1 item is required ❌",
       },
     },
 
     totalPrice: {
       type: Number,
       required: [true, "Total price is required ❌"],
-      min: [0, "Total price 0 se kam nahi ho sakti ❌"],
+      min: [0, "Total price cannot be negetive ❌"],
     },
 
     status: {

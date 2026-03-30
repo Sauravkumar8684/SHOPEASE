@@ -2,7 +2,7 @@ import { Schema, model } from "mongoose";
 
 const cartSchema = new Schema(
   {
-    // ✅ String se ObjectId — CRITICAL FIX
+    // ✅ User reference with required validation
     user: {
       type: Schema.Types.ObjectId,
       ref: "User",
@@ -19,8 +19,7 @@ const cartSchema = new Schema(
         quantity: {
           type: Number,
           default: 1,
-          // ✅ Quantity 0 ya negative nahi honi chahiye
-          min: [1, "Quantity atleast 1 honi chahiye ❌"],
+          min: [1, "Quantity atleast 1 is required ❌"],
         },
       },
     ],
@@ -28,7 +27,7 @@ const cartSchema = new Schema(
   { timestamps: true }
 );
 
-// ✅ Ek user ka sirf ek cart hoga
+// ✅ Unique index to ensure one cart per user
 cartSchema.index({ user: 1 }, { unique: true });
 
 export default model("Cart", cartSchema);

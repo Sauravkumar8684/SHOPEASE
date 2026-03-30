@@ -6,7 +6,7 @@ import { isAuthenticatedUser } from "../middleware/authMiddleware.js";
 
 const router = Router();
 
-// Cart total calculate karne ka helper
+
 const calculateTotal = (items) => {
   return items.reduce((total, item) => {
     if (item.product) {
@@ -28,9 +28,9 @@ router.post("/add", isAuthenticatedUser, async (req, res) => {
       return res.status(400).json({ success: false, msg: "Invalid product ID ❌" });
     }
 
-    // ✅ Quantity positive honi chahiye
+    // ✅ Quantity positive 
     if (quantity < 1) {
-      return res.status(400).json({ success: false, msg: "Quantity kam se kam 1 honi chahiye ❌" });
+      return res.status(400).json({ success: false, msg: "Quantity at least one  ❌" });
     }
 
     const product = await Product.findById(productId);
@@ -42,7 +42,7 @@ router.post("/add", isAuthenticatedUser, async (req, res) => {
     if (quantity > product.stock) {
       return res.status(400).json({
         success: false,
-        msg: `Sirf ${product.stock} items available hain ❌`
+        msg: `Sirf ${product.stock} items available  ❌`
       });
     }
 
@@ -57,12 +57,12 @@ router.post("/add", isAuthenticatedUser, async (req, res) => {
     );
 
     if (existingItem) {
-      // ✅ Total quantity bhi stock se zyada nahi honi chahiye
+      
       const newQty = existingItem.quantity + quantity;
       if (newQty > product.stock) {
         return res.status(400).json({
           success: false,
-          msg: `Cart mein already ${existingItem.quantity} hai. Sirf ${product.stock} available hain ❌`
+          msg: `Cart  already ${existingItem.quantity} hai. Sirf ${product.stock} available  ❌`
         });
       }
       existingItem.quantity = newQty;
@@ -72,12 +72,12 @@ router.post("/add", isAuthenticatedUser, async (req, res) => {
 
     await cart.save();
 
-    // ✅ Populate karke return karo
+    
     const updatedCart = await Cart.findById(cart._id).populate("items.product");
 
     res.json({
       success: true,
-      msg: "Product cart mein add ho gaya ✅",
+      msg: "Product cart  add  ✅",
       items: updatedCart.items,
       total: calculateTotal(updatedCart.items),
     });
@@ -100,7 +100,7 @@ router.get("/", isAuthenticatedUser, async (req, res) => {
       return res.json({ success: true, items: [], total: 0 });
     }
 
-    // ✅ Deleted products ko filter karo
+    
     const validItems = cart.items.filter(item => item.product !== null);
 
     res.json({
@@ -116,7 +116,7 @@ router.get("/", isAuthenticatedUser, async (req, res) => {
 });
 
 // ===============================
-//  UPDATE QUANTITY  ← YE PEHLE MISSING THA
+//  UPDATE QUANTITY 
 // ===============================
 router.put("/update/:productId", isAuthenticatedUser, async (req, res) => {
   try {
@@ -140,7 +140,7 @@ router.put("/update/:productId", isAuthenticatedUser, async (req, res) => {
     if (quantity > product.stock) {
       return res.status(400).json({
         success: false,
-        msg: `Sirf ${product.stock} items available hain ❌`
+        msg: `Sirf ${product.stock} items available  ❌`
       });
     }
 
@@ -154,7 +154,7 @@ router.put("/update/:productId", isAuthenticatedUser, async (req, res) => {
     );
 
     if (!item) {
-      return res.status(404).json({ success: false, msg: "Product cart mein nahi hai ❌" });
+      return res.status(404).json({ success: false, msg: "Product cart not found ❌" });
     }
 
     item.quantity = quantity;
@@ -164,7 +164,7 @@ router.put("/update/:productId", isAuthenticatedUser, async (req, res) => {
 
     res.json({
       success: true,
-      msg: "Quantity update ho gayi ✅",
+      msg: "Quantity updated ✅",
       items: updatedCart.items,
       total: calculateTotal(updatedCart.items),
     });
@@ -196,7 +196,7 @@ router.delete("/remove/:productId", isAuthenticatedUser, async (req, res) => {
     );
 
     if (itemIndex === -1) {
-      return res.status(404).json({ success: false, msg: "Product cart mein nahi hai ❌" });
+      return res.status(404).json({ success: false, msg: "Product cart is not found ❌" });
     }
 
     cart.items.splice(itemIndex, 1);
@@ -206,7 +206,7 @@ router.delete("/remove/:productId", isAuthenticatedUser, async (req, res) => {
 
     res.json({
       success: true,
-      msg: "Product cart se remove ho gaya ✅",
+      msg: "Product cart remove ✅",
       items: updatedCart.items,
       total: calculateTotal(updatedCart.items),
     });
@@ -218,7 +218,7 @@ router.delete("/remove/:productId", isAuthenticatedUser, async (req, res) => {
 });
 
 // ===============================
-//  CLEAR CART  ← YE BHI MISSING THA
+//  CLEAR CART  
 // ===============================
 router.delete("/clear", isAuthenticatedUser, async (req, res) => {
   try {
@@ -231,7 +231,7 @@ router.delete("/clear", isAuthenticatedUser, async (req, res) => {
     cart.items = [];
     await cart.save();
 
-    res.json({ success: true, msg: "Cart clear ho gaya ✅" });
+    res.json({ success: true, msg: "Cart clear  ✅" });
 
   } catch (err) {
     console.error("CLEAR CART ERROR:", err.message);

@@ -11,17 +11,17 @@ const router = Router();
 // ===============================
 router.get("/stats", isAuthenticatedUser, isAdmin, async (req, res) => {
   try {
-    // ✅ Parallel queries — teeno ek saath chalenge, fast
+    // ✅ Parallel queries 
     const [totalUsers, totalOrders, revenueData, statusData] = await Promise.all([
       User.countDocuments(),
       Order.countDocuments(),
 
-      // ✅ Aggregation — Order.find() se zyada efficient
+      
       Order.aggregate([
         { $group: { _id: null, total: { $sum: "$totalPrice" } } }
       ]),
 
-      // ✅ Bonus: status breakdown bhi do
+      
       Order.aggregate([
         { $group: { _id: "$status", count: { $sum: 1 } } }
       ])
@@ -29,7 +29,7 @@ router.get("/stats", isAuthenticatedUser, isAdmin, async (req, res) => {
 
     const totalRevenue = revenueData[0]?.total || 0;
 
-    // Status breakdown object banana
+    // Status breakdown object 
     const ordersByStatus = {};
     statusData.forEach(s => {
       ordersByStatus[s._id] = s.count;
@@ -41,7 +41,7 @@ router.get("/stats", isAuthenticatedUser, isAdmin, async (req, res) => {
         totalUsers,
         totalOrders,
         totalRevenue,
-        ordersByStatus, // { Pending: 5, Shipped: 3, Delivered: 10 }
+        ordersByStatus, 
       }
     });
 
@@ -58,7 +58,7 @@ router.get("/", isAuthenticatedUser, isAdmin, async (req, res) => {
   try {
     const users = await User.find()
       .select("-password")
-      .sort({ createdAt: -1 }); // ✅ newest first
+      .sort({ createdAt: -1 }); 
 
     res.json({
       success: true,
@@ -76,7 +76,7 @@ router.get("/", isAuthenticatedUser, isAdmin, async (req, res) => {
 //  UPDATE USER ROLE (ADMIN)
 // ===============================
 router.put("/role/:id", isAuthenticatedUser, isAdmin, async (req, res) => {
-  // ✅ ID validate karo
+  // ✅ ID validate 
   if (!isValidObjectId(req.params.id)) {
     return res.status(400).json({ success: false, msg: "Invalid user ID ❌" });
   }
@@ -88,15 +88,15 @@ router.put("/role/:id", isAuthenticatedUser, isAdmin, async (req, res) => {
     if (!role || !["user", "admin"].includes(role)) {
       return res.status(400).json({
         success: false,
-        msg: "Role sirf 'user' ya 'admin' ho sakta hai ❌"
+        msg: "Role  'user' ya 'admin'  ❌"
       });
     }
 
-    // ✅ Admin apna khud ka role change na kar sake
+    
     if (req.params.id === req.user.id) {
       return res.status(400).json({
         success: false,
-        msg: "Aap apna khud ka role change nahi kar sakte ❌"
+        msg: "admin not change role ❌"
       });
     }
 
@@ -106,14 +106,14 @@ router.put("/role/:id", isAuthenticatedUser, isAdmin, async (req, res) => {
       { new: true }
     ).select("-password");
 
-    // ✅ User exist check
+    // ✅ User exist 
     if (!user) {
       return res.status(404).json({ success: false, msg: "User not found ❌" });
     }
 
     res.json({
       success: true,
-      msg: `Role "${role}" update ho gaya ✅`,
+      msg: `Role "${role}" update  ✅`,
       user,
     });
 

@@ -16,7 +16,7 @@ export const isAuthenticatedUser = (req, res, next) => {
       });
     }
 
-    // ✅ Verify — invalid hone par automatically catch mein jayega
+    // ✅ Verify — and handle errors properly
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.user = decoded;
     next();
@@ -25,7 +25,7 @@ export const isAuthenticatedUser = (req, res, next) => {
     console.error("AUTH ERROR:", err.message);
     return res.status(401).json({
       success: false,
-      msg: "Token invalid ya expire ho gaya ❌",
+      msg: "Token invalid  ❌",
     });
   }
 };

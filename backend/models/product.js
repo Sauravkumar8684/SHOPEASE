@@ -15,9 +15,9 @@ const productSchema = new Schema(
     price: {
       type: Number,
       required: [true, "Product price is required ❌"],
-      // ✅ Min aur max dono
-      min: [0, "Price 0 se kam nahi ho sakti ❌"],
-      max: [99999999, "Price 8 digits se zyada nahi ho sakti ❌"],
+      
+      min: [0, "Price cannot be negetive ❌"],
+      max: [99999999, "product price max 8 digit  ❌"],
     },
     category: {
       type: String,
@@ -27,8 +27,8 @@ const productSchema = new Schema(
     stock: {
       type: Number,
       required: [true, "Stock quantity is required ❌"],
-      // ✅ Stock negative nahi hona chahiye
-      min: [0, "Stock 0 se kam nahi ho sakta ❌"],
+      
+      min: [0, "Stock cannot be negative ❌"],
       default: 0,
     },
     image: {

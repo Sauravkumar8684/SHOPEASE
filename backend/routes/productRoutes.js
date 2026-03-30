@@ -5,7 +5,7 @@ import { isAdmin, isAuthenticatedUser } from "../middleware/authMiddleware.js";
 
 const router = Router();
 
-// ID validate karne ka helper
+// ID validateion middleware
 const validateId = (req, res) => {
   if (!isValidObjectId(req.params.id)) {
     res.status(400).json({ success: false, msg: "Invalid product ID ❌" });
@@ -41,7 +41,7 @@ router.get("/", async (req, res) => {
 
     if (sort === "price_asc") dbQuery = dbQuery.sort({ price: 1 });
     else if (sort === "price_desc") dbQuery = dbQuery.sort({ price: -1 });
-    else dbQuery = dbQuery.sort({ createdAt: -1 }); // ✅ default: newest first
+    else dbQuery = dbQuery.sort({ createdAt: -1 }); 
 
     const products = await dbQuery;
 
@@ -85,11 +85,11 @@ router.post("/add", isAuthenticatedUser, isAdmin, async (req, res) => {
   try {
     const { name, description, price, category, stock, image } = req.body;
 
-    // ✅ Sab required fields validate karo
+    // ✅  every required fields validate
     if (!name || !description || !price || !category || !image) {
       return res.status(400).json({
         success: false,
-        msg: "Name, description, price, category aur image required hain ❌"
+        msg: "Name, description, price, category and image required  ❌"
       });
     }
 
@@ -118,16 +118,16 @@ router.post("/add", isAuthenticatedUser, isAdmin, async (req, res) => {
 //  UPDATE PRODUCT (ADMIN)
 // ===============================
 router.put("/:id", isAuthenticatedUser, isAdmin, async (req, res) => {
-  if (!validateId(req, res)) return; // ✅ ID check
+  if (!validateId(req, res)) return; 
 
   try {
-    // ✅ Sirf allowed fields — req.body directly nahi
+    // ✅ Sirf allowed fields — req.body directly no
     const { name, description, price, category, stock, image } = req.body;
 
     const updatedProduct = await Product.findByIdAndUpdate(
       req.params.id,
       { name, description, price, category, stock, image },
-      { new: true, runValidators: true } // ✅ schema validators chalenge
+      { new: true, runValidators: true } 
     );
 
     if (!updatedProduct) {
@@ -150,7 +150,7 @@ router.put("/:id", isAuthenticatedUser, isAdmin, async (req, res) => {
 //  DELETE PRODUCT (ADMIN)
 // ===============================
 router.delete("/:id", isAuthenticatedUser, isAdmin, async (req, res) => {
-  if (!validateId(req, res)) return; // ✅ ID check
+  if (!validateId(req, res)) return;
 
   try {
     const product = await Product.findById(req.params.id);

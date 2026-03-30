@@ -24,14 +24,14 @@ router.post("/register", async (req, res) => {
     if (!name || !email || !password || !phoneNumber) {
       return res.status(400).json({
         success: false,
-        msg: "Sab fields required hain ❌"
+        msg: "every fields required  ❌"
       });
     }
 
     if (password.length < 6) {
       return res.status(400).json({
         success: false,
-        msg: "Password kam se kam 6 characters ka hona chahiye ❌"
+        msg: "Password must be at least six characters long ❌"
       });
     }
 
@@ -39,17 +39,17 @@ router.post("/register", async (req, res) => {
     if (existingUser) {
       return res.status(400).json({
         success: false,
-        msg: "Yeh email already registered hai ❌"
+        msg: " email already registered  ❌"
       });
     }
 
-    // ✅ Role kabhi bhi frontend se accept mat karo
+    // ✅ Role is hardcoded to "user" — never trust client input for this
     const newUser = await User.create({
       name,
       email,
       password,
       phoneNumber,
-      role: "user", // always hardcode
+      role: "user", 
     });
 
     const token = generateToken(newUser._id, newUser.role);
@@ -86,17 +86,17 @@ router.post("/login", async (req, res) => {
     if (!email || !password) {
       return res.status(400).json({
         success: false,
-        msg: "Email aur password dono required hain ❌"
+        msg: "Email and password  required  ❌"
       });
     }
 
     const user = await User.findOne({ email }).select("+password");
 
-    // ✅ Alag-alag message mat do — security risk hota hai
+    // ✅ Check if user exists and password matches
     if (!user || !(await bcrypt.compare(password, user.password))) {
       return res.status(401).json({
         success: false,
-        msg: "Invalid email ya password ❌"
+        msg: "Invalid email or password ❌"
       });
     }
 
