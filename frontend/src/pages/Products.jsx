@@ -12,7 +12,7 @@ function Products() {
   const [sort, setSort] = useState("");
   const navigate = useNavigate();
 
-  // ✅ Search/filter/sort ke saath fetch
+  // ✅ Search/filter/sort 
   const fetchProducts = useCallback(async () => {
     try {
       setLoading(true);
@@ -33,10 +33,10 @@ function Products() {
 
   useEffect(() => {
     fetchProducts();
-  }, [fetchProducts]); // ✅ filter change hone par re-fetch
+  }, [fetchProducts]); 
 
   const addToCart = async (e, productId) => {
-    e.stopPropagation(); // ✅ Card click propagation rokna
+    e.stopPropagation(); 
     try {
       setLoadingId(productId);
       await API.post("/cart/add", { productId, quantity: 1 });

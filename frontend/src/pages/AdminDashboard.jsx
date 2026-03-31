@@ -36,6 +36,7 @@ function AdminDashboard() {
   }, [navigate, fetchData]);
 
   // ✅ Toggle role function for both promote and demote
+  
   const updateRole = async (id, currentRole) => {
     const newRole = currentRole === "admin" ? "user" : "admin";
     try {

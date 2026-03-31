@@ -127,11 +127,13 @@ function Cart() {
                 </div>
 
                 {/* Subtotal */}
+
                 <p className="font-bold text-gray-700 w-24 text-right">
                   ₹{(item.product?.price * item.quantity).toLocaleString("en-IN")}
                 </p>
 
                 {/* Remove */}
+
                 <button
                   onClick={() => removeItem(item.product._id)}
                   disabled={loadingId === item.product._id}
@@ -141,6 +143,7 @@ function Cart() {
             ))}
 
             {/* Total + Checkout */}
+            
             <div className="bg-white rounded-xl shadow p-4 mt-4">
               <div className="flex justify-between items-center mb-4">
                 <span className="text-lg font-bold">Total:</span>

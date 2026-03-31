@@ -63,6 +63,7 @@ function Orders() {
               </div>
 
               {/* Items */}
+              
               <div className="border-t pt-3 mb-3">
                 {(order.orderItems || []).map((item, i) => (
                   <div key={i} className="flex justify-between text-sm text-gray-700 py-1">
@@ -73,8 +74,11 @@ function Orders() {
               </div>
 
               {/* Footer */}
+
               <div className="flex justify-between items-center border-t pt-3">
+
                 {/* ✅ Date */}
+
                 <p className="text-xs text-gray-400">
                   {new Date(order.createdAt).toLocaleDateString("en-IN", {
                     day: "numeric", month: "short", year: "numeric"

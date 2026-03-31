@@ -34,6 +34,7 @@ function Login() {
       const res = await API.post("/auth/login", form);
 
       // Token check 
+      
       if (!res.data.token) throw new Error("Token missing in response");
 
       localStorage.setItem("token", res.data.token);
@@ -59,9 +60,11 @@ function Login() {
     <div className="min-h-screen flex items-center justify-center bg-blue-900 px-4">
 
       {/* ✅ Responsive */}
+
       <div className="w-full max-w-4xl bg-blue-800 rounded-2xl flex flex-col md:flex-row shadow-2xl overflow-hidden text-white">
 
         {/* LEFT */}
+
         <div className="md:w-1/2 flex flex-col justify-center p-10">
           <h1 className="text-4xl font-bold mb-4">Welcome Back!</h1>
           <p className="mb-6 opacity-80 text-sm">

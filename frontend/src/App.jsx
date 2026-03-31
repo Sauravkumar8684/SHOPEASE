@@ -1,5 +1,10 @@
-
-import { BrowserRouter, Routes, Route, useLocation, Navigate } from "react-router-dom";
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  useLocation,
+  Navigate,
+} from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 
 import Login from "./pages/Login";
@@ -7,117 +12,140 @@ import Register from "./pages/Register";
 import Products from "./pages/Products";
 import Cart from "./pages/Cart";
 import Orders from "./pages/Orders";
-import Navbar from "./components/Navbar";
+import ProductDetails from "./pages/ProductDetails";
 import Admin from "./pages/Admin";
 import AdminDashboard from "./pages/AdminDashboard";
-import AdminOrders from "./pages/AdminOrder"; 
-import ProductDetails from "./pages/ProductDetails";
+import AdminOrders from "./pages/AdminOrder";
+import Navbar from "./components/Navbar";
+import Footer from "./components/Footer";
 
-
-//  Protected Route (User)
+// ✅ User Protected Route
 const ProtectedRoute = ({ children }) => {
   const token = localStorage.getItem("token");
-
-  return token ? children : <Navigate to="/login" />;
+  return token ? children : <Navigate to="/login" replace />;
 };
 
-
-//  Admin Route
+// ✅ Admin Protected Route
 const AdminRoute = ({ children }) => {
   const user = JSON.parse(localStorage.getItem("user"));
-
   return user && user.role === "admin"
     ? children
-    : <Navigate to="/" />;
+    : <Navigate to="/" replace />;
 };
 
-
-//  Wrapper component
+// ✅ App Content
 function AppContent() {
   const location = useLocation();
 
-  return (
-    <>
-      {/* Hide Navbar on Login/Register */}
-      {location.pathname !== "/login" &&
-        location.pathname !== "/register" && <Navbar />}
+  // Login aur Register  Navbar/Footer hide 
+  const hideLayout =
+    location.pathname === "/login" ||
+    location.pathname === "/register";
 
+  return (
+    <div className="flex flex-col min-h-screen">
+
+      {/* Navbar — Login/Register not visible */}
+      {!hideLayout && <Navbar />}
+
+      {/* Toast Notifications */}
       <Toaster position="top-right" />
 
-      <Routes>
-        {/* Public */}
-        <Route path="/" element={<Login />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
+      {/* Main Content */}
+      <main className="flex-1">
+        <Routes>
 
-        {/* User Protected */}
-        <Route
-          path="/products"
-          element={
-            <ProtectedRoute>
-              <Products />
-            </ProtectedRoute>
-          }
-        />
+          
+          <Route
+            path="/"
+            element={
+              localStorage.getItem("token")
+                ? <Navigate to="/products" replace />
+                : <Navigate to="/login" replace />
+            }
+          />
 
-        <Route
-          path="/cart"
-          element={
-            <ProtectedRoute>
-              <Cart />
-            </ProtectedRoute>
-          }
-        />
+          {/* Public Routes */}
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
 
-        <Route
-          path="/orders"
-          element={
-            <ProtectedRoute>
-              <Orders />
-            </ProtectedRoute>
-          }
-        />
+          {/* User Protected Routes */}
+          <Route
+            path="/products"
+            element={
+              <ProtectedRoute>
+                <Products />
+              </ProtectedRoute>
+            }
+          />
 
-        {/* Admin Protected */}
-        <Route
-          path="/admin"
-          element={
-            <AdminRoute>
-              <Admin />
-            </AdminRoute>
-          }
-        />
+          <Route
+            path="/product/:id"
+            element={
+              <ProtectedRoute>
+                <ProductDetails />
+              </ProtectedRoute>
+            }
+          />
 
-        <Route
-          path="/dashboard"
-          element={
-            <AdminRoute>
-              <AdminDashboard />
-            </AdminRoute>
-          }
-        />
+          <Route
+            path="/cart"
+            element={
+              <ProtectedRoute>
+                <Cart />
+              </ProtectedRoute>
+            }
+          />
 
-        {/* NEW: Admin Orders */}
-        <Route
-          path="/admin/orders"
-          element={
-            <AdminRoute>
-              <AdminOrders />
-            </AdminRoute>
-          }
-        />
-        {/* Product Details */}
-        <Route
-          path="/product/:id"
-          element={
-            <ProductDetails />
-          }
-        />
-      </Routes>
-    </>
+          <Route
+            path="/orders"
+            element={
+              <ProtectedRoute>
+                <Orders />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Admin Protected Routes */}
+          <Route
+            path="/dashboard"
+            element={
+              <AdminRoute>
+                <AdminDashboard />
+              </AdminRoute>
+            }
+          />
+
+          <Route
+            path="/admin"
+            element={
+              <AdminRoute>
+                <Admin />
+              </AdminRoute>
+            }
+          />
+
+          <Route
+            path="/admin/orders"
+            element={
+              <AdminRoute>
+                <AdminOrders />
+              </AdminRoute>
+            }
+          />
+
+          {/* ✅ 404 — any wrong url redirect will be done */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+
+        </Routes>
+      </main>
+
+      {/* Footer — Login/Register not be visible */}
+      {!hideLayout && <Footer />}
+
+    </div>
   );
 }
-
 
 // Main App
 function App() {
